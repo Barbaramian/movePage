@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>movepage</title>
+    <script src="move-tools.js"></script>
+    <script src="jquery.js"></script>
+    <style>
+        * {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        div.wrapper {
+            border: 5px double rgb(124, 24, 29);
+            overflow: hidden;
+            width: 525px;
+            height: 350px;
+            position: relative;
+            left: 100px;
+            top: 50px;
+            z-index: 3;
+        }
+
+        .wrapper div.huge {
+            position: relative;
+            border: none;
+            width: 3150px;
+            height: 350px;
+            top: 0px;
+            left: 0px;
+        }
+
+        img {
+            position: absolute;
+            width: 525px;
+            height: 350px;
+            float: left;
+        }
+
+        img:nth-child(1) {
+            left: 0;
+        }
+
+        img:nth-child(2) {
+            left: 525px;
+        }
+
+        img:nth-child(3) {
+            left: 1050px;
+        }
+
+        img:nth-child(4) {
+            left: 1575px;
+        }
+
+        img:nth-child(5) {
+            left: 2100px;
+        }
+
+        /* 按钮 */
+
+        div.button {
+            box-sizing: border-box;
+            position: absolute;
+            background-color: black;
+            opacity: 0.5;
+            width: 200px;
+            height: 30px;
+            left: 180px;
+            top: 320px;
+            border: none;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            padding: 2px 25px;
+        }
+
+        .wrapper .button .bt {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            opacity: 1;
+            background-color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-left: 20px;
+        }
+
+        .wrapper .button .active {
+            background-color: deeppink;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="huge">
+            <!-- <img src="movepage4.jpg" alt="paint4" style="width:525px;"> -->
+            <img src="movepage1.jpg" alt="paint1">
+            <img src="movepage2.jpg" alt="paint2">
+            <img src="movepage3.jpg" alt="paint3">
+            <img src="movepage4.jpg" alt="paint4">
+            <img src="movepage5-1.jpg" alt="paint5">
+        </div>
+        <!-- 按钮 -->
+        <!-- <div class="button">
+            <span class="bt" id="active"></span>
+            <span class="bt"></span>
+            <span class="bt"></span>
+            <span class="bt"></span>
+        </div> -->
+    </div>
+
+    <script>
+        // 自动轮播 -- js写法
+        // var div = document.getElementsByTagName('div')[0];
+        // var huge = document.getElementsByClassName('huge')[0];
+        // var img = document.getElementsByTagName('img');
+        // var i = 1;
+        // var timer = setInterval(function(){
+        //     move(huge,"left",-525*i);
+        //     i++;
+        //     if(parseInt(huge.style.left) < -1575){
+        //         huge.style.left == "-525px";
+        //         i = 2;
+        //     }
+        // },2000)
+        // 按钮事件
+        // var button = document.getElementsByClassName('button')[0];
+        // var span = document.getElementsByTagName('span');
+        // var len = span.length;
+        // for(var j = 0;j<len;j++){
+        //     (function(j){
+        //         span[j].onmousedown = function(){
+        //             huge.style.left = -525*(j+1) + 'px';
+        //         }
+        //     }(j))
+        // }
+
+        // jquery写法
+        var movePage = {
+            len: $('.wrapper .huge img').length,
+            nowIndex: 0,
+            lastIndex: undefined,
+            huge: $('.huge'),
+            key: true,
+            timer: null,
+            init: function () {
+                if (this.len > 1) {
+                    this.createDom(this.len);
+                    this.bindEvent();
+                    this.moveAuto();
+                }
+            },
+            createDom: function (len) {
+                var btnstr = '';
+                for (var i = 0; i < len; i++) {
+                    if (i == 0) {
+                        btnstr += '<span class="bt active""></span>';
+                    } else {
+                        btnstr += '<span class="bt"></span>';
+                    }
+                }
+                btnstr = '<div class="button">' + btnstr + '</div>';
+                $('.wrapper').append(btnstr);
+            },
+            bindEvent: function () {
+                var self = this;
+                $('span').on('click', function () {
+                    // self.getIndex($(this).nowIndex());
+                    self.tool($(this).index());
+                    // self.huge.trigger('move',self.nowIndex);
+                    self.changeSpan();
+                })
+                this.huge.on('move', function (event, date) {
+                    if (date == self.len - 1) {
+                        $('.huge').animate({
+                            left: 0 - date * 525
+                        }, function () {
+                            self.key = true;
+                            $('.huge').css({
+                                left: '0'
+                            });
+                            self.moveAuto();
+                        });
+                        self.nowIndex = 0;
+                    } else {
+                        $('.huge').animate({
+                            left: 0 - date * 525
+                        }, 500, 'linear', function () {
+                            self.key = true;
+                            self.moveAuto();
+                        })
+                    }
+                })
+            },
+            tool: function (str) {
+                if (this.key) {
+                    this.getIndex(str);
+                    if (this.nowIndex !== this.lastIndex) {
+                        this.huge.trigger('move', this.nowIndex);
+                        this.key = false;
+                    }
+                }
+            },
+            getIndex: function (str) {
+                this.lastIndex = this.nowIndex;
+                if (str == 'move') {
+                    this.nowIndex = this.nowIndex == this.len - 1 ? 0 : this.nowIndex + 1;
+                } else {
+                    this.nowIndex = str;
+                }
+            },
+            changeSpan: function () {
+                $('.active').removeClass('active');
+                if (this.nowIndex == this.len - 1) {
+                    $('span').eq(0).addClass('active');
+                } else {
+                    $('span').eq(this.nowIndex).addClass('active');
+                }
+            },
+            moveAuto: function () {
+                var self = this;
+                clearTimeout(this.timer);
+                this.timer = setTimeout(function () {
+                    self.tool('move');
+                    self.changeSpan();
+                }, 3000)
+            }
+        };
+        movePage.init();
+    </script>
+</body>
+
+
+</html>
